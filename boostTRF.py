@@ -127,27 +127,22 @@ llA = ['ctx-lh-'+l for l in ctxll] + ['ctx-rh-'+l for l in ctxll] + subctxll + [
 
 
 decimation = 1   #when loading data
-dssfilter = [30,130]
-datafilter = [30,130]
+dssfilter = [70,300]
+datafilter = [70,300]
 nperm = 3
-
-ltranswidth = 5
-htranswidth = 5
-datafreq = 500
-boostingFraction = [-0.05,0.4]
+ltranswidth = 10
+htranswidth = 10
+datafreq = 1000
+boostingFraction = [-0.05,0.21]
 basislen = 0.004
 datatime = [0,60]
-ellipord = 3
 
 print('loading stimuli')
 
 matstimfolder = stimuliFolder
-gammastimfolder = stimuliFolder
 envelopes = {}
 carrier = {}
 yangh = {}
-yangl = {}
-gamma = {}
 
 mat7 = scipy.io.loadmat(f'{matstimfolder}/quiet_h-audspec-1000.mat')
 mat8 = scipy.io.loadmat(f'{matstimfolder}/quiet_l-audspec-1000.mat')
@@ -189,7 +184,6 @@ mat = scipy.io.loadmat('matlabOutHAYO.mat')
 badchannelsAll = mat['badChannels'][0]
 badchannelsNames = mat['subjectsAll'][0]
 
-
 aparcvols = load.unpickle('aparcvol.pkl')
 
 subjectFolders = [f for f in listdir(sqdFolder) if ~isfile(join(sqdFolder,f))]
@@ -201,85 +195,12 @@ subjectFolders.sort()
 
 if not os.path.exists(outputFolder):
     os.makedirs(outputFolder)
-temp = '%s/Source/Topomap' % outputFolder
-if not os.path.exists(temp):
-    os.makedirs(temp)
-temp = '%s/Source/TRFavg' % outputFolder
-if not os.path.exists(temp):
-    os.makedirs(temp)
-temp = '%s/Source/Brain' % outputFolder
-if not os.path.exists(temp):
-    os.makedirs(temp)
 temp = '%s/Source/Pickle' % outputFolder
-if not os.path.exists(temp):
-    os.makedirs(temp)
-temp = '%s/Source/TRF' % outputFolder
-if not os.path.exists(temp):
-    os.makedirs(temp)
-temp = '%s/Source/RvalTopo' % outputFolder
-if not os.path.exists(temp):
-    os.makedirs(temp)
-temp = '%s/Source/RvalTRF' % outputFolder
-if not os.path.exists(temp):
-    os.makedirs(temp)
-temp = '%s/Source/DSS6' % outputFolder
-if not os.path.exists(temp):
-    os.makedirs(temp)
-temp = '%s/Source/TRFPCA' % outputFolder
-if not os.path.exists(temp):
-    os.makedirs(temp)
-temp = '%s/Source/PicklePCA' % outputFolder
-if not os.path.exists(temp):
-    os.makedirs(temp)
-temp = '%s/Source/Reconstruction' % outputFolder
-if not os.path.exists(temp):
-    os.makedirs(temp)
-temp = '%s/Source/FFT' % outputFolder
-if not os.path.exists(temp):
-    os.makedirs(temp)
-
-if not os.path.exists(outputFolder):
-    os.makedirs(outputFolder)
-temp = '%s/Sensor/Topomap' % outputFolder
-if not os.path.exists(temp):
-    os.makedirs(temp)
-temp = '%s/Sensor/TRFavg' % outputFolder
-if not os.path.exists(temp):
-    os.makedirs(temp)
-temp = '%s/Sensor/Brain' % outputFolder
-if not os.path.exists(temp):
-    os.makedirs(temp)
-temp = '%s/Sensor/Pickle' % outputFolder
-if not os.path.exists(temp):
-    os.makedirs(temp)
-temp = '%s/Sensor/TRF' % outputFolder
-if not os.path.exists(temp):
-    os.makedirs(temp)
-temp = '%s/Sensor/RvalTopo' % outputFolder
-if not os.path.exists(temp):
-    os.makedirs(temp)
-temp = '%s/Sensor/RvalTRF' % outputFolder
-if not os.path.exists(temp):
-    os.makedirs(temp)
-temp = '%s/Sensor/DSS6' % outputFolder
-if not os.path.exists(temp):
-    os.makedirs(temp)
-temp = '%s/Sensor/TRFPCA' % outputFolder
-if not os.path.exists(temp):
-    os.makedirs(temp)
-temp = '%s/Sensor/PicklePCA' % outputFolder
-if not os.path.exists(temp):
-    os.makedirs(temp)
-temp = '%s/Sensor/Reconstruction' % outputFolder
-if not os.path.exists(temp):
-    os.makedirs(temp)
-temp = '%s/Sensor/FFT' % outputFolder
 if not os.path.exists(temp):
     os.makedirs(temp)
 
 rawE1 = mne.io.read_raw_kit(join(emptyroomFolder,'EmptyRoom_PreAM-2_08.02.16.sqd'),preload=True)
 rawE2 = mne.io.read_raw_kit(join(emptyroomFolder,'ERT_07.25.14_4.14.sqd'),preload=True)
-
 
 if os.path.exists(f'{outputFolder}/Source/boosting.txt'):
     os.remove(f'{outputFolder}/Source/boosting.txt')
@@ -441,7 +362,6 @@ for subjectF in subjectFolders:
         dsP['yangh'] = resample(dsP['yangh'], datafreq)
         dsP['carrier'] = resample(dsP['carrier'], datafreq)
 
-    # dsP['source'] = dsP['source'].sub(source=1)
     nperm = 3
     predstr = 'yangh'
     dsP = bF.permutePred(dsP,predstr,nperm)

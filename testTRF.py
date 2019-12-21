@@ -73,9 +73,6 @@ aparcs += ['bankssts']
 aparcR = [x + '-rh' for x in aparcs]
 aparcL = [x + '-lh' for x in aparcs]
 
-
-
-
 magma = cm.get_cmap('YlOrRd', 12)
 cutoff = 135
 magma2 = magma(np.linspace(0, 1, 256-cutoff))
@@ -87,7 +84,6 @@ im_ext = '.png'
 glassbrain_h = 6
 brain_h = 1000
 brain_w = 2500
-
 
 
 HAYO_all = [ 'R0840', 'R1801', 'R2079', 'R2083', 'R2084', 'R2085', 'R2086', 'R2092', 'R2093', 'R2094', 'R2107', 'R2130',
@@ -117,29 +113,6 @@ def change_subjects_dir(ds,subjects_dir=subjects_dir):
             if 'source' in ds[k].dimnames:
                 ds[k].source.subjects_dir = subjects_dir
     return ds
-
-
-
-
-
-
-def niceplot_compete_boxplot(ds,outputfolder=niceplotfolder,savestr=''):
-
-    ds2 = Dataset()
-    carrier = ds['h_carrier_model'].max('source').max('time')
-    yangh = ds['h_yangh_model'].max('source').max('time')
-    ds2['y'] = combine([yangh,carrier])
-    ds2['cond'] = Factor(['HFE' for i in range(ds.n_cases)]+['Carrier' for i in range(ds.n_cases)])
-    ds2['subj'] = Factor([i for i in range(ds.n_cases)]+[i for i in range(ds.n_cases)])
-    import matplotlib as mpl
-    mpl.rcParams['font.size'] = 30
-
-    vmax = 0.025#1.5*ds2['y'].max()
-    p = plot.Boxplot('y',top=vmax,x='cond',match='subj',ds=ds2,w=7,h=8, xlabel='',ylabel='TRF maximum amplitude')
-
-    p.save(f'{outputfolder}/Boxplot_compete{savestr}{im_ext}')
-    p.close()
-
 
 ###########################################################################################
 
@@ -1917,9 +1890,6 @@ def niceplot_trf(xnd,maskeddiff,t1,savestr = '',volflag = False,times=None,
     figlegend.legend(custom_lines, legend, 'center',prop={'size':fontsize})
     figlegend.savefig(f'{niceplotfolder}/trf_{savestr}_legend{im_ext}')
     plt.close()
-
-
-
 
 
 def niceplot_fft(ds_in,savestr='',niceplotfolder=niceplotfolder,roi=None):
