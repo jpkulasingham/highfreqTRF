@@ -10,7 +10,7 @@ Run the script to compute high frequency TRFs for each subject in the sqd filepa
 **testTRF.py**
 Module to perform statistical tests using permutation tests and TFCE (https://doi.org/10.1016/j.neuroimage.2008.03.061)
 ````
-import testTRF as T`
+import testTRF as T
 ds = T.load_smooth(T.pklFv)
 tests = T.run_tests_vol(ds) 
 ````
