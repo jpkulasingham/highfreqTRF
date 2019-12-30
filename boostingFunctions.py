@@ -1,18 +1,6 @@
-from eelbrain import *
-import mne
 import numpy as np
-from os import listdir
-from os.path import isfile, join
-import os
-import scipy.io
-import pdb
-from scipy import signal
-import time
-import socket
-import warnings
 
 
-mne.set_log_level('ERROR')
 configure(n_workers = 8)
 
 
