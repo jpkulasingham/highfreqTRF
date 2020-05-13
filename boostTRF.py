@@ -46,42 +46,31 @@ llA = ['ctx-lh-'+l for l in ctxll] + ['ctx-rh-'+l for l in ctxll] + subctxll + [
 aparcvols = load.unpickle('aparcvol.pkl')
 
 decimation = 1   #when loading data
-datafilter = [70,300]
+datafilter = [70,200]
 nperm = 3
-ltranswidth = 10
-htranswidth = 10
-datafreq = 1000
-boostingFraction = [-0.05,0.21]
+ltranswidth = 5
+htranswidth = 5
+datafreq = 500
+boostingFraction = [-0.041,0.21]
 basislen = 0.004
 datatime = [0,60]
 
 print('loading stimuli')
-matstimfolder = stimuliFolder
-carrier = {}
-yangh = {}
+preds = [
+    'hfe',
+    'carrier',
+    'hfe_p10_2_q0',
+    'hfe_p10_2_q1',
+    'carrier_p10_2_q0',
+    'carrier_p10_2_q1',
+]
 
-mat7 = scipy.io.loadmat(f'{matstimfolder}/quiet_h-audspec-1000.mat')
-mat8 = scipy.io.loadmat(f'{matstimfolder}/quiet_l-audspec-1000.mat')
-freqs = Scalar('frequency',mat7['frequencies'][0],'Hz')
-spec7 = NDVar(mat7['specgram'],dims=(UTS(0,0.001,60000),freqs))
-spec8 = NDVar(mat8['specgram'],dims=(UTS(0,0.001,60000),freqs))
-spec7 = spec7.sub(frequency=(300,4000))
-spec8 = spec8.sub(frequency=(300,4000))
-spec7filt= filter_data(spec7,datafilter[0],datafilter[1],filter_length='auto',method='fir',fir_design='firwin',l_trans_bandwidth = ltranswidth,h_trans_bandwidth = htranswidth)
-spec8filt= filter_data(spec8,datafilter[0],datafilter[1],filter_length='auto',method='fir',fir_design='firwin',l_trans_bandwidth = ltranswidth,h_trans_bandwidth = htranswidth)
-filt7 = spec7filt.mean('frequency')
-filt8 = spec8filt.mean('frequency')
-yangh[7]= filter_data(filt7,datafilter[0],datafilter[1],filter_length='auto',method='fir',fir_design='firwin',l_trans_bandwidth = ltranswidth,h_trans_bandwidth = htranswidth)
-yangh[8]= filter_data(filt8,datafilter[0],datafilter[1],filter_length='auto',method='fir',fir_design='firwin',l_trans_bandwidth = ltranswidth,h_trans_bandwidth = htranswidth)
+pred_dict = {}
+for pred in preds:
+    pred_dict[f'QH_{pred}'] = load.unpickle(f'{predictor_folder}/quiet_h|{pred}.pickle')
+    pred_dict[f'QL_{pred}'] = load.unpickle(f'{predictor_folder}/quiet_l|{pred}.pickle')
 
-wav7 = load.wav('%s/quiet_h.wav' % stimuliFolder)
-wav7.x = wav7.x.astype('float64')
-wav7 = resample(wav7,1000)
-wav8 = load.wav('%s/quiet_l.wav' % stimuliFolder)
-wav8.x = wav8.x.astype('float64')
-wav8 = resample(wav8,1000)
-carrier[7] = filter_data(wav7,datafilter[0],datafilter[1],filter_length='auto',method='fir',fir_design='firwin',l_trans_bandwidth = ltranswidth,h_trans_bandwidth = htranswidth)
-carrier[8] = filter_data(wav8,datafilter[0],datafilter[1],filter_length='auto',method='fir',fir_design='firwin',l_trans_bandwidth = ltranswidth,h_trans_bandwidth = htranswidth)
+
 
 mat = scipy.io.loadmat('matlabOutHAYO.mat')
 badchannelsAll = mat['badChannels'][0]
@@ -171,17 +160,15 @@ for subjectF in subjectFolders:
     dsHP = dsH.copy()
     dsLP = dsL.copy()
 
-    dsHP['yangh'] = combine([yangh[name] for name in dsH['wav']])
-    dsHP['carrier'] = combine([carrier[name] for name in dsH['wav']])
-
-    dsLP['yangh'] = combine([yangh[name] for name in dsL['wav']])
-    dsLP['carrier'] = combine([carrier[name] for name in dsL['wav']])
+    for pred in preds:
+        dsHP[pred] = combine([pred_dict[f'{cond}_{pred}'] for cond in dsH['condition']])
+        dsLP[pred] = combine([pred_dict[f'{cond}_{pred}'] for cond in dsL['condition']])
 
     print('inverse solution')
     epH = load.fiff.mne_epochs(dsH,datatime[0],datatime[1])
     epL = load.fiff.mne_epochs(dsL,datatime[0],datatime[1])
 
-    stcH = mne.minimum_norm.apply_inverse_epochs(epH[0], invsol, lambda2=1, method='MNE',pick_ori='vector')
+    stcH = mne.minimum_norm.apply_inverse_epochs(epH[0], invsol, lambda2=0.111, method='dSPM',pick_ori='vector')
     sndH = load.fiff.stc_ndvar(stcH,subjectF,f'{srcspace_name}',subjects_dir=mriFolder)
     pdb.set_trace()
 
@@ -193,7 +180,7 @@ for subjectF in subjectFolders:
 
     del stcH
 
-    stcL = mne.minimum_norm.apply_inverse_epochs(epL, invsol, lambda2=1, method='MNE',pick_ori='vector')
+    stcL = mne.minimum_norm.apply_inverse_epochs(epL, invsol, lambda2=0.111, method='dSPM',pick_ori='vector')
 
     sndL = load.fiff.stc_ndvar(stcL,subjectF,f'{srcspace_name}',subjects_dir=mriFolder)
     sndL.source.parc = load.unpickle(parc_name)
@@ -220,19 +207,16 @@ for subjectF in subjectFolders:
     if(datafreq!=1000):
         print('downsampling')
         dsP['source'] = resample(dsP['source'], datafreq)
-        dsP['yangh'] = resample(dsP['yangh'], datafreq)
-        dsP['carrier'] = resample(dsP['carrier'], datafreq)
+        for pred in preds:
+            dsP[pred] = resample(dsP[pred], datafreq)
 
     nperm = 3
-    predstr = 'yangh'
-    dsP = bF.permutePred(dsP,predstr,nperm)
+    for pred in preds:
+        dsP = bF.permutePred(dsP, pred, nperm)
 
-    predstr = 'carrier'
-    dsP = bF.permutePred(dsP,predstr,nperm)
     del sndH, sndL, rawH, rawL
-    predstr = ['yangh','carrier']
 
-    pdb.set_trace()
+    predstr = ['hfe','carrier']
     bF.boostWrap_multpred_multperm(dsP, predstr, outputFolder, subjectF, f'{srcspace_name}', boostingFraction, basislen, 4, nperm, rstr= 'source')
     del dsP['source']
 
